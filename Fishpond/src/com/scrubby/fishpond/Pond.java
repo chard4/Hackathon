@@ -1,5 +1,7 @@
 package com.scrubby.fishpond;
 
+import java.util.ArrayList;
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.BitmapFactory;
@@ -18,7 +20,7 @@ public class Pond extends SurfaceView implements SurfaceHolder.Callback
 	{
 		super(context);
 		getHolder().addCallback(this);
-		fish = new Fish(BitmapFactory.decodeResource(getResources(), R.drawable.fish), 30, 50);
+		fish = new Fish(BitmapFactory.decodeResource(getResources(), R.drawable.fish), 30, 50, this);
 		thread = new MainThread(getHolder(), this);
 		setFocusable(true);
 	}
@@ -68,75 +70,35 @@ public class Pond extends SurfaceView implements SurfaceHolder.Callback
 			int x = (int) event.getX();
 			int y = (int) event.getY();
 			fish.setDest(new Location(x, y));
-			/*
-			 * calculate angle of path from fish's initial point to dest
-			 * then use angle to set specific bitmap
-			 */
-			int deltaX = x-fish.getLoc().getX();
-			System.out.println("deltaX "+deltaX);
-			int deltaY = y-fish.getLoc().getY();
-			System.out.println("deltaY "+deltaY);
-			if (deltaX == 0)
-			{
-				if (deltaY < 0)
-					fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish));
-				else
-					fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish4));
-			}
-			else
-			{
-				double angle = Math.atan((1.0*deltaY)/deltaX);
-				System.out.println("angle "+angle);
-				if (deltaX > 0)
-				{
-					if (Math.PI*(-3.0/8) < angle && angle < Math.PI*(-1.0/8))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish2));
-					else if (Math.PI*(-1.0/8) < angle && angle <= Math.PI*(1.0/8))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish3));
-					else if (Math.PI*(1.0/8) < angle && angle <= Math.PI*(3.0/8))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish8));
-					else if (Math.PI*(-1.0/2) < angle && angle <= Math.PI*(-3.0/8))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish));
-					else if (Math.PI*(3.0/8) < angle && angle <= Math.PI*(1.0/8))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish4));
-				}
-				else if (deltaX < 0)
-				{
-					if (Math.PI*(-3.0/8) < angle && angle <= Math.PI*(-1.0/8))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish7));
-					else if (Math.PI*(-1.0/8) < angle && angle <= Math.PI*(1.0/8))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish5));
-					else if (Math.PI*(1.0/8) < angle && angle <= Math.PI*(3.0/8))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish6));
-					else if (Math.PI*(-1.0/2) < angle && angle <= Math.PI*(-3.0/8))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish4));
-					else if (Math.PI*(3.0/8) < angle && angle <= Math.PI*(1.0/2))
-						fish.setBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.fish));
-				}
-				
-			}
 			fish.setDirected(true);
+			fish.setIdling(false);
 		}
 		if (event.getAction() == MotionEvent.ACTION_MOVE)//finger is being dragged across the screen
 		{
+			ArrayList<Location> locs = new ArrayList<Location>();
 			//the fish should try to follow the path drawn somehow
-			
+			final int historySize = event.getHistorySize();
+			final int pointerCount = event.getPointerCount();
+		     for (int h = 0; h < historySize; h++) 
+		     {
+		         for (int p = 0; p < pointerCount; p++) 
+		         {
+		             int x = (int)event.getHistoricalX(p, h);
+		             int y = (int)event.getHistoricalY(p, h);
+		             locs.add(new Location(x, y));
+		         }
+		     }
+		     for (int p = 0; p < pointerCount; p++) 
+		     {
+		         int x = (int)event.getX(p);
+		         int y = (int)event.getY(p);
+		         locs.add(new Location(x, y));
+		     }
+		     fish.setPath(locs);
+		     fish.setIdling(false);
 		}
 		return true;
 	}
-	/*
-	//collision to prevent the fish from going off-screen
-	public void update()
-	{
-		if (fish.getSpeed().getxDir() == Speed.DIRECTION_RIGHT && fish.getLoc().getX() + fish.getBitmap().getWidth() / 2 >= getWidth())
-			fish.getSpeed().switchXDirection();
-		if (fish.getSpeed().getxDir() == Speed.DIRECTION_LEFT && fish.getLoc().getX() - fish.getBitmap().getWidth() / 2 <= 0)
-			fish.getSpeed().switchXDirection();
-		if (fish.getSpeed().getyDir() == Speed.DIRECTION_UP && fish.getLoc().getY() + fish.getBitmap().getWidth() / 2 >= getWidth())
-			fish.getSpeed().switchXDirection();
-		if (fish.getSpeed().getyDir() == Speed.DIRECTION_DOWN && fish.getLoc().getY() - fish.getBitmap().getHeight() / 2 <= 0)
-			fish.getSpeed().switchXDirection();
-	}*/
 	
 	@Override
 	protected void onDraw(Canvas canvas)
