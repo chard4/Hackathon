@@ -14,6 +14,13 @@ public class MainThread extends Thread
 		this.isRunning = isRunning;
 	}
 	
+	public MainThread(SurfaceHolder surfaceHolder, Pond pond)
+	{
+		super();
+		this.surfaceHolder = surfaceHolder;
+		this.pond = pond;
+	}
+	
 	public void run()
 	{
 		Canvas canvas;
@@ -25,7 +32,8 @@ public class MainThread extends Thread
 				canvas = this.surfaceHolder.lockCanvas();
 				synchronized(surfaceHolder)
 				{
-					pond.onDraw(canvas);
+					//this.pond.update();
+					this.pond.onDraw(canvas);
 				}
 			}
 			finally
